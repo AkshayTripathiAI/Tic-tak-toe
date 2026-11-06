@@ -1,50 +1,65 @@
-# React Tic-Tac-Toe Game
+# Tic-Tac-Toe
 
-![Gameplay](/screenshots/tic-tac-toe.png)
+A two-player Tic-Tac-Toe game for the browser, built with React and Vite.
 
-This is a simple Tic-Tac-Toe game built with React. It allows two players to take turns marking empty squares on a 3x3 grid, aiming to get three of their symbols (X or O) in a row, column, or diagonal.
+Built as a practice project while learning React.
+
+![Tic-Tac-Toe game board](screenshots/tic-tac-toe.png)
 
 ## Features
 
-- Players can enter their names and select their symbols (X or O).
-- Players take turns marking empty squares on the game board.
-- The game displays a log of each turn, showing which player selected which square.
-- When the game ends, it displays the winner (if there is one) or indicates a draw.
-- Players can restart the game at any time.
+- Two players (X and O) take turns on a 3x3 board; X always starts.
+- The active player is highlighted, and each square can only be played once.
+- Editable player names.
+- Turn log listing every move made so far.
+- Win and draw detection with a "Game Over" screen and a Rematch button.
 
-## Screenshots
+| Game board | Game over |
+| --- | --- |
+| ![Game board](screenshots/gameboard.png) | ![Game over screen](screenshots/gameover.png) |
 
-![Gameplay](/screenshots/gameboard.png)
+## Tech stack
 
-![Game Over](/screenshots/gameover.png)
+- React 18 (function components, `useState`, derived state)
+- Vite 4
+- Plain CSS
 
-## Project Structure
+## Getting started
 
-- `src/components/Player.js`: Represents a player in the game, allowing them to change their name and symbol.
-- `src/components/GameBoard.js`: Represents the tic-tac-toe game board, allowing players to make moves and displaying the current state of the board.
-- `src/components/Log.js`: Displays a log of the game's turns.
-- `src/components/GameOver.js`: Displays the game over screen, indicating the winner (if there is one) or a draw and providing a button to restart the game.
-- `src/winning-combinations.js`: Defines the winning combinations for the tic-tac-toe game.
-- `src/App.js`: Contains the main logic for the game, including handling turns, determining the winner, and restarting the game.
-- `src/index.js`: Entry point of the application.
+Prerequisites: Node.js 18+ and npm.
 
-## Setup
+```bash
+git clone https://github.com/AkshayTripathiAI/Tic-tak-toe.git
+cd Tic-tak-toe
+npm install
+npm run dev
+```
 
-1. Clone this repository to your local machine.
-2. Navigate to the project directory.
-3. Run `npm install` to install dependencies.
-4. Run `npm run dev` to start the development server.
-5. Open [http://localhost:5173](http://localhost:3000) in your browser to play the game.
+Then open http://localhost:5173.
 
-## Technologies Used
+Other scripts:
 
-- React: JavaScript library for building user interfaces.
-- useState Hook: React hook for managing state in functional components.
+| Command | Description |
+| --- | --- |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm run lint` | Run ESLint |
 
-## Credits
+## Project structure
 
-This project was created by [Your Name].
+```
+src/
+├── App.jsx                  # Game state: turns, board, winner/draw derivation
+├── index.jsx                # Entry point
+├── index.css
+├── winning-combinations.js  # The 8 winning lines
+└── components/
+    ├── Players.jsx          # Player name display/edit
+    ├── GameBoard.jsx        # 3x3 board
+    ├── Log.jsx              # Turn log
+    └── GameOver.jsx         # Winner/draw overlay with Rematch
+```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE)
