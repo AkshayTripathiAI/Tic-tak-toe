@@ -1,5 +1,7 @@
 # Tic-Tac-Toe
 
+**Live demo:** https://akshaytripathiai.github.io/Tic-tak-toe/
+
 A two-player Tic-Tac-Toe game for the browser, built with React and Vite.
 
 Built as a practice project while learning React.
