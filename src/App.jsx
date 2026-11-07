@@ -1,9 +1,10 @@
+import { useEffect, useState } from "react";
 import Player from "./components/Players";
-import GameBorad from "./components/GameBoard";
-import { useState } from "react";
+import GameBoard from "./components/GameBoard";
 import Log from "./components/Log";
-import { WINNING_COMBINATIONS } from "./winning-combinations";
 import GameOver from "./components/GameOver";
+import Scoreboard from "./components/Scoreboard";
+import { WINNING_COMBINATIONS } from "./winning-combinations";
 
 const PLAYERS = {
   X: "Player 1",
@@ -16,127 +17,173 @@ const INITIAL_GAME_BOARD = [
   [null, null, null],
 ];
 
+const SCORE_KEY = "ticTacToe.scores";
+const EMPTY_SCORES = { X: 0, O: 0, draws: 0 };
+
+function readScores() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SCORE_KEY));
+    return stored ? { ...EMPTY_SCORES, ...stored } : EMPTY_SCORES;
+  } catch {
+    return EMPTY_SCORES;
+  }
+}
+
 function deriveActivePlayer(gameTurns) {
   let currentPlayer = "X";
 
-  if (gameTurns.length > 0 && gameTurns[0].PLAYERS === "X") {
+  if (gameTurns.length > 0 && gameTurns[0].player === "X") {
     currentPlayer = "O";
   }
   return currentPlayer;
 }
 
 function deriveGameBoard(gameTurns) {
-  // need to create deep copy of gameBoard because when we restart game it does not reset the gameboard because array are object references a memory location
-  let gameBoard = [...INITIAL_GAME_BOARD.map((array) => [...array])];
+  // Deep copy so restarting really starts from an empty board (arrays are
+  // references, so mutating INITIAL_GAME_BOARD would leak between games).
+  const gameBoard = INITIAL_GAME_BOARD.map((array) => [...array]);
 
   for (const turn of gameTurns) {
-    // gameBoard[turn.square.row][turn.square.col] = turn.PLAYERS;
-    const { square, PLAYERS } = turn;
+    const { square, player } = turn;
     const { row, col } = square;
-    gameBoard[row][col] = PLAYERS;
+    gameBoard[row][col] = player;
   }
   return gameBoard;
 }
 
-function deriveWinner(gameBoard, players) {
-  let winner = null;
-  for (const combinations of WINNING_COMBINATIONS) {
-    const firstSquareSymbol =
-      gameBoard[combinations[0].row][combinations[0].column];
-    const secondSquareSymbol =
-      gameBoard[combinations[1].row][combinations[1].column];
-    const thirdSquareSymbol =
-      gameBoard[combinations[2].row][combinations[2].column];
-    if (
-      firstSquareSymbol &&
-      firstSquareSymbol === secondSquareSymbol &&
-      firstSquareSymbol === thirdSquareSymbol
-    ) {
-      winner = players[firstSquareSymbol];
+// Returns the winning symbol and line, or null.
+function deriveWinner(gameBoard) {
+  for (const combination of WINNING_COMBINATIONS) {
+    const [first, second, third] = combination.map(
+      ({ row, column }) => gameBoard[row][column],
+    );
+    if (first && first === second && first === third) {
+      return { symbol: first, line: combination };
     }
   }
-  return winner;
+  return null;
 }
+
 function App() {
   const [players, setPlayers] = useState(PLAYERS);
   const [gameTurns, setGameTurns] = useState([]);
-  // const [hasWinner, setHasWinner] = useState(null);
-  // const [activePlayer, setActivePlayer] = useState("X");
+  const [scores, setScores] = useState(readScores);
 
   const activePlayer = deriveActivePlayer(gameTurns);
-  // let gameBoard = initialGameBoard;
   const gameBoard = deriveGameBoard(gameTurns);
-  const winner = deriveWinner(gameBoard, PLAYERS);
-  const hasDraw = gameTurns.length === 9 && !winner;
+  const winResult = deriveWinner(gameBoard);
+  // Use the (possibly edited) player names, not the defaults.
+  const winner = winResult ? players[winResult.symbol] : null;
+  const hasDraw = gameTurns.length === 9 && !winResult;
+  const gameIsOver = Boolean(winResult) || hasDraw;
 
-  //function triggeres on every turn
+  // Record the result once per finished game.
+  const resultKey = winResult ? winResult.symbol : hasDraw ? "draws" : null;
+  useEffect(() => {
+    if (!resultKey) return;
+    setScores((prevScores) => {
+      const updated = { ...prevScores, [resultKey]: prevScores[resultKey] + 1 };
+      try {
+        localStorage.setItem(SCORE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore storage errors
+      }
+      return updated;
+    });
+  }, [resultKey]);
+
   function handleSelectSquare(rowIndex, colIndex) {
-    // setActivePlayer((curActivePlayer) => (curActivePlayer === "X" ? "O" : "X"));
-
+    if (gameIsOver) return;
     setGameTurns((prevTurns) => {
-      // let curPlayer = "X";
       const curPlayer = deriveActivePlayer(prevTurns);
-
-      // if (prevTurns.length > 0 && prevTurns[0].PLAYERS === "X") {
-      //   curPlayer = "O";
-      // }
-
-      const updatedTurns = [
-        { square: { row: rowIndex, col: colIndex }, PLAYERS: curPlayer },
+      return [
+        { square: { row: rowIndex, col: colIndex }, player: curPlayer },
         ...prevTurns,
       ];
-
-      return updatedTurns;
     });
   }
 
   function handleRestart() {
     setGameTurns([]);
-    // setActivePlayer("X");
+  }
+
+  function handleUndo() {
+    setGameTurns((prevTurns) => prevTurns.slice(1));
+  }
+
+  function handleResetScores() {
+    setScores(EMPTY_SCORES);
+    try {
+      localStorage.removeItem(SCORE_KEY);
+    } catch {
+      // ignore storage errors
+    }
   }
 
   function handlePlayerNameChange(symbol, newName) {
-    // setPlayer((prevPlayer) => ({ ...prevPlayer, [symbol]: newName }));
-    setPlayers((prevPlayers) => {
-      return {
-        ...prevPlayers,
-        [symbol]: newName,
-      };
-    });
+    setPlayers((prevPlayers) => ({
+      ...prevPlayers,
+      [symbol]: newName,
+    }));
   }
 
   return (
     <main>
       <div id="game-container">
-        {/* PLAYERS  */}
         <ol id="players" className="highlight-player">
-          {/* in react when we reuses components then react make isolated instances for every component so if a state change in one instance of component it does not effect the state of other instance  */}
+          {/* Each Player instance has its own isolated state. */}
           <Player
-            // initialName="Player 1"
             initialName={PLAYERS.X}
             symbol="X"
-            isActive={activePlayer === "X"}
+            isActive={!gameIsOver && activePlayer === "X"}
             onChangeName={handlePlayerNameChange}
           />
           <Player
-            // initialName="Player 2"
             initialName={PLAYERS.O}
             symbol="O"
-            isActive={activePlayer === "O"}
+            isActive={!gameIsOver && activePlayer === "O"}
             onChangeName={handlePlayerNameChange}
           />
         </ol>
-        {(winner || hasDraw) && (
-          <GameOver winner={winner} onRestart={handleRestart} />
-        )}
-        <GameBorad
+        {gameIsOver && <GameOver winner={winner} onRestart={handleRestart} />}
+        <GameBoard
           onSelectSquare={handleSelectSquare}
-          // activePlayerSymbol={activePlayer}
-          // turns={gameTurns}
           board={gameBoard}
+          winningLine={winResult?.line}
+          disabled={gameIsOver}
         />
+        <p id="game-actions">
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={gameTurns.length === 0 || gameIsOver}
+          >
+            Undo move
+          </button>
+          <button
+            type="button"
+            onClick={handleRestart}
+            disabled={gameTurns.length === 0}
+          >
+            Restart
+          </button>
+        </p>
       </div>
-      <Log turns={gameTurns} />
+      <Scoreboard
+        players={players}
+        scores={scores}
+        onReset={handleResetScores}
+      />
+      <Log turns={gameTurns} players={players} />
+      <footer id="footer">
+        <a
+          href="https://github.com/AkshayTripathiAI/Tic-tak-toe"
+          target="_blank"
+          rel="noreferrer"
+        >
+          View source on GitHub
+        </a>
+      </footer>
     </main>
   );
 }

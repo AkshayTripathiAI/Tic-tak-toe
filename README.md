@@ -10,9 +10,12 @@ Built as a practice project while learning React.
 
 - Two players (X and O) take turns on a 3x3 board; X always starts.
 - The active player is highlighted, and each square can only be played once.
-- Editable player names.
-- Turn log listing every move made so far.
-- Win and draw detection with a "Game Over" screen and a Rematch button.
+- Editable player names (press Enter or click Save); the winner message and log use your custom names.
+- Turn log listing every move made so far, with the player, symbol and square.
+- Win and draw detection with the winning line highlighted, a "Game Over" screen and a Rematch button.
+- Undo the last move or restart at any time.
+- Scoreboard of wins and draws saved in `localStorage`, with a reset button.
+- Keyboard-friendly (focus styles, labelled squares) and a smaller board on phones.
 
 | Game board | Game over |
 | --- | --- |
@@ -23,6 +26,7 @@ Built as a practice project while learning React.
 - React 18 (function components, `useState`, derived state)
 - Vite 4
 - Plain CSS
+- Deployed to GitHub Pages from the `gh-pages` branch (`base: '/Tic-tak-toe/'` in `vite.config.js`)
 
 ## Getting started
 
@@ -57,6 +61,7 @@ src/
     ├── Players.jsx          # Player name display/edit
     ├── GameBoard.jsx        # 3x3 board
     ├── Log.jsx              # Turn log
+    ├── Scoreboard.jsx       # Persisted win/draw tally
     └── GameOver.jsx         # Winner/draw overlay with Rematch
 ```
 
